@@ -12,13 +12,13 @@ The development tool used is the Foundry where the contracts and the tests are w
 
 ## Features
 
-### EventFactory
+### EventFactory Contract
 
 - **_createEvent_** - Users can create the Event smart contract by calling this function and passing in the data about the tickets. This data should include the different types of tickets that there will be with their id, cost, and the maximum supply. The ownership of this smart contract is then transferred to the caller of the transaction and the EventCreated event is fired.
 
 - **_version_** - Returns the version of the Factory contract as it's upgradeable.
 
-### Event
+### Event Contract
 
 - **_buyTickets_** - By calling this function, users can buy ticket(s) for that specific event. The exact ether value should be sent with this transaction for it to succeed, if it is sent more, the transaction will revert. If the maximum amount of ticket amount has been reached, users won't be able to call this function. The owner of the event contract can also pause the ticket sales which will make it impossible for users to call this function.
 
