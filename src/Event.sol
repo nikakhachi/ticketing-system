@@ -84,6 +84,19 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         _unpause();
     }
 
+    function version() external pure virtual returns (string memory) {
+        return "v1";
+    }
+
+    function withdrawFunds() public onlyOwner {
+        (bool success, ) = payable(owner()).call{value: address(this).balance}(
+            ""
+        );
+        require(success);
+    }
+
+    receive() external payable {}
+
     function _beforeTokenTransfer(
         address operator,
         address from,
@@ -93,9 +106,5 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         bytes memory data
     ) internal override(ERC1155, ERC1155Supply) {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-    }
-
-    function version() external pure virtual returns (string memory) {
-        return "v1";
     }
 }

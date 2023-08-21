@@ -41,7 +41,7 @@ contract EventTest is Test, ERC1155Holder {
         tickets.push(Event.Ticket(ticket3Id, ticket3Price, ticket3MaxSupply));
 
         eFactory = new EventFactory();
-        e = Event(eFactory.createEvent(tickets));
+        e = Event(payable(eFactory.createEvent(tickets)));
     }
 
     function testInitialVariables() public {
@@ -59,7 +59,7 @@ contract EventTest is Test, ERC1155Holder {
     function testCreateEventFromFactory() public {
         vm.expectEmit(false, true, true, false);
         emit EventCreated(address(0), address(this), block.timestamp);
-        Event _e = Event(eFactory.createEvent(tickets));
+        Event _e = Event(payable(eFactory.createEvent(tickets)));
 
         for (uint i = 0; i < tickets.length; i++) {
             uint id = tickets[i].id;
@@ -307,4 +307,19 @@ contract EventTest is Test, ERC1155Holder {
 
         e.safeTransferFrom(address(this), address(1), ticket1Id, amount, "");
     }
+
+    function testRecievingAndWithdrawingEther() public {
+        assertEq(address(e).balance, 0);
+
+        (bool success, ) = address(e).call{value: 1 ether}("");
+        require(success);
+
+        assertEq(address(e).balance, 1 ether);
+
+        e.withdrawFunds();
+
+        assertEq(address(e).balance, 0);
+    }
+
+    receive() external payable {}
 }
