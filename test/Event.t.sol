@@ -82,6 +82,7 @@ contract EventTest is Test, ERC1155Holder {
 
         assertEq(e.balanceOf(address(this), ticket1Id), _amount);
         assertEq(e.soldTickets(ticket1Id), _amount);
+        assertEq(e.remainingTickets(ticket1Id), ticket1MaxSupply - _amount);
     }
 
     function testBuyTicketsForElseFuzz(uint _amount) public {
@@ -97,6 +98,7 @@ contract EventTest is Test, ERC1155Holder {
 
         assertEq(e.balanceOf(receiver, ticket1Id), _amount);
         assertEq(e.soldTickets(ticket1Id), _amount);
+        assertEq(e.remainingTickets(ticket1Id), ticket1MaxSupply - _amount);
     }
 
     function testBuyMoreTicketsThanMaxSupplyFuzz(uint amount2) public {
@@ -155,9 +157,11 @@ contract EventTest is Test, ERC1155Holder {
 
         assertEq(e.balanceOf(address(this), ticket1Id), amount1);
         assertEq(e.soldTickets(ticket1Id), amount1);
+        assertEq(e.remainingTickets(ticket1Id), ticket1MaxSupply - amount1);
 
         assertEq(e.balanceOf(address(this), ticket3Id), amount3);
         assertEq(e.soldTickets(ticket3Id), amount3);
+        assertEq(e.remainingTickets(ticket3Id), ticket3MaxSupply - amount3);
     }
 
     function testBuyTicketsBatchForElse() public {
@@ -177,9 +181,11 @@ contract EventTest is Test, ERC1155Holder {
 
         assertEq(e.balanceOf(receiver, ticket1Id), amount1);
         assertEq(e.soldTickets(ticket1Id), amount1);
+        assertEq(e.remainingTickets(ticket1Id), ticket1MaxSupply - amount1);
 
         assertEq(e.balanceOf(receiver, ticket3Id), amount3);
         assertEq(e.soldTickets(ticket3Id), amount3);
+        assertEq(e.remainingTickets(ticket3Id), ticket3MaxSupply - amount3);
     }
 
     function testBuyMoreTicketsThanMaxSupplyInBatch() public {
