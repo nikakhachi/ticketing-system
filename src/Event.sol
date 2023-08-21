@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "openzeppelin/token/ERC1155/ERC1155Upgradeable.sol";
-import "openzeppelin/access/OwnableUpgradeable.sol";
-import "openzeppelin/security/PausableUpgradeable.sol";
-import "openzeppelin/token/ERC1155/extensions/ERC1155BurnableUpgradeable.sol";
-import "openzeppelin/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
-import "openzeppelin/proxy/utils/Initializable.sol";
-import "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/extensions/ERC1155BurnableUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 contract Event is
     Initializable,
@@ -74,8 +74,7 @@ contract Event is
     function buyTicketsBatch(
         address to,
         uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
+        uint256[] memory amounts
     ) public payable whenNotPaused {
         uint256 overallPrice;
         for (uint256 i; i < ids.length; i++) {
@@ -86,7 +85,7 @@ contract Event is
             ) revert MaxSupplyReached();
         }
         if (msg.value != overallPrice) revert InvalidPrice();
-        _mintBatch(to, ids, amounts, data);
+        _mintBatch(to, ids, amounts, "");
     }
 
     function soldTickets(uint256 ticketId) public view returns (uint256) {
