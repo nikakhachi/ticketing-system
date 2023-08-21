@@ -3,11 +3,19 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/Event.sol";
+import "../src/EventFactory.sol";
 
 import "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 
 contract EventTest is Test, ERC1155Holder {
+    event EventCreated(
+        address indexed eventAddress,
+        address indexed owner,
+        uint256 indexed timestamp
+    );
+
     Event public e;
+    EventFactory public eFactory;
 
     Event.Ticket[] public tickets;
 
@@ -32,7 +40,8 @@ contract EventTest is Test, ERC1155Holder {
         tickets.push(Event.Ticket(ticket2Id, ticket2Price, ticket2MaxSupply));
         tickets.push(Event.Ticket(ticket3Id, ticket3Price, ticket3MaxSupply));
 
-        e = new Event(tickets);
+        eFactory = new EventFactory();
+        e = Event(eFactory.createEvent(tickets));
     }
 
     function testInitialVariables() public {
@@ -44,6 +53,22 @@ contract EventTest is Test, ERC1155Holder {
             assertEq(e.ticketsWithPrice(id), price);
             assertEq(e.ticketsWithMaxSupply(id), maxSupply);
             assertEq(e.ticketIds(i), id);
+        }
+    }
+
+    function testCreateEventFromFactory() public {
+        vm.expectEmit(false, true, true, false);
+        emit EventCreated(address(0), address(this), block.timestamp);
+        Event _e = Event(eFactory.createEvent(tickets));
+
+        for (uint i = 0; i < tickets.length; i++) {
+            uint id = tickets[i].id;
+            uint price = tickets[i].price;
+            uint maxSupply = tickets[i].maxSupply;
+
+            assertEq(_e.ticketsWithPrice(id), price);
+            assertEq(_e.ticketsWithMaxSupply(id), maxSupply);
+            assertEq(_e.ticketIds(i), id);
         }
     }
 
