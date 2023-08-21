@@ -215,6 +215,20 @@ contract EventTest is Test, ERC1155Holder {
         );
     }
 
+    function testNonOwnerEndingTheSales() public {
+        uint amount = 10;
+
+        e.buyTickets{value: amount * ticket1Price}(
+            address(this),
+            ticket1Id,
+            amount
+        );
+
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.prank(address(1));
+        e.endSales();
+    }
+
     function testContinuingTheSales() public {
         uint amount = 10;
 
@@ -233,6 +247,22 @@ contract EventTest is Test, ERC1155Holder {
             ticket1Id,
             amount
         );
+    }
+
+    function testNonOwnerContinuingTheSales() public {
+        uint amount = 10;
+
+        e.buyTickets{value: amount * ticket1Price}(
+            address(this),
+            ticket1Id,
+            amount
+        );
+
+        e.endSales();
+
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        vm.prank(address(1));
+        e.continueSales();
     }
 
     function testTicketTransferWhenPaused() public {
