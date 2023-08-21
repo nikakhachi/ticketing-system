@@ -33,7 +33,7 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     constructor(Ticket[] memory tickets) ERC1155("") {
         uint256[] memory _ticketIds = new uint256[](tickets.length);
 
-        for (uint256 i; i < tickets.length; i++) {
+        for (uint256 i; i < tickets.length; ++i) {
             Ticket memory ticket = tickets[i];
             ticketsWithPrice[ticket.id] = ticket.price;
             ticketsWithMaxSupply[ticket.id] = ticket.maxSupply;
@@ -72,12 +72,17 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         uint256[] memory amounts
     ) public payable whenNotPaused {
         uint256 overallPrice;
-        for (uint256 i; i < ids.length; i++) {
-            overallPrice += ticketsWithPrice[ids[i]] * amounts[i];
+        for (uint256 i; i < ids.length; ++i) {
+            uint256 ticketAmount = amounts[i];
+
+            overallPrice += ticketsWithPrice[ids[i]] * ticketAmount;
+
             if (
-                ERC1155Supply.totalSupply(ids[i]) + amounts[i] >
+                ERC1155Supply.totalSupply(ids[i]) + ticketAmount >
                 ticketsWithMaxSupply[ids[i]]
-            ) revert MaxSupplyReached();
+            ) {
+                revert MaxSupplyReached();
+            }
         }
         if (msg.value != overallPrice) revert InvalidPrice();
         _mintBatch(to, ids, amounts, "");
