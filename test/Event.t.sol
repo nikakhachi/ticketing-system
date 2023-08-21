@@ -7,6 +7,12 @@ import "../src/EventFactory.sol";
 
 import "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 
+/**
+ * @title EventTest Contract
+ * @author Nika Khachiashvili
+ * @dev Test cases for Event and EventFactory contracts
+ * @dev IMPORTANT: These test cases aren't ready for production use, because not all the edge, tiny very specific cases are covered
+ */
 contract EventTest is Test, ERC1155Holder {
     event EventCreated(
         address indexed eventAddress,
@@ -35,6 +41,7 @@ contract EventTest is Test, ERC1155Holder {
     uint256[] public ids;
     uint256[] public amounts;
 
+    /// @dev Setting up the testing environment
     function setUp() public {
         tickets.push(Event.Ticket(ticket1Id, ticket1Price, ticket1MaxSupply));
         tickets.push(Event.Ticket(ticket2Id, ticket2Price, ticket2MaxSupply));
@@ -44,6 +51,7 @@ contract EventTest is Test, ERC1155Holder {
         e = Event(payable(eFactory.createEvent(tickets)));
     }
 
+    /// @dev Testing the initial variables
     function testInitialVariables() public {
         for (uint i = 0; i < tickets.length; i++) {
             uint id = tickets[i].id;
@@ -56,6 +64,7 @@ contract EventTest is Test, ERC1155Holder {
         }
     }
 
+    /// @dev Testing the initial variables second time directly from created event from Factory
     function testCreateEventFromFactory() public {
         vm.expectEmit(false, true, true, false);
         emit EventCreated(address(0), address(this), block.timestamp);
@@ -72,6 +81,7 @@ contract EventTest is Test, ERC1155Holder {
         }
     }
 
+    /// @dev Fuzz Testing the buying of tickets
     function testBuyTicketsFuzz(uint _amount) public {
         vm.assume(_amount <= ticket1MaxSupply);
         e.buyTickets{value: _amount * ticket1Price}(
@@ -85,6 +95,7 @@ contract EventTest is Test, ERC1155Holder {
         assertEq(e.remainingTickets(ticket1Id), ticket1MaxSupply - _amount);
     }
 
+    /// @dev Fuzz Testing the buying of tickets for someone else
     function testBuyTicketsForElseFuzz(uint _amount) public {
         vm.assume(_amount <= ticket1MaxSupply);
 
@@ -101,6 +112,7 @@ contract EventTest is Test, ERC1155Holder {
         assertEq(e.remainingTickets(ticket1Id), ticket1MaxSupply - _amount);
     }
 
+    /// @dev Fuzz Testing the buying of more tickets that the max supply
     function testBuyMoreTicketsThanMaxSupplyFuzz(uint amount2) public {
         vm.assume(
             amount2 > ticket1MaxSupply / 2 && amount2 < ticket1MaxSupply * 10
@@ -122,6 +134,7 @@ contract EventTest is Test, ERC1155Holder {
         );
     }
 
+    /// @dev Fuzz Testing the buying of tickets with invalid price
     function testBuyTicketsWithInvalidPriceFuzz(uint priceDelta) public {
         uint amount = 22;
         vm.assume(priceDelta > 0 && priceDelta < amount * ticket1Price);
@@ -141,6 +154,7 @@ contract EventTest is Test, ERC1155Holder {
         );
     }
 
+    /// @dev Testing the batch buying of tickets
     function testBuyTicketsBatch() public {
         uint amount1 = 50;
         uint amount3 = 5;
@@ -164,6 +178,7 @@ contract EventTest is Test, ERC1155Holder {
         assertEq(e.remainingTickets(ticket3Id), ticket3MaxSupply - amount3);
     }
 
+    /// @dev Testing the batch buying of tickets for someone else
     function testBuyTicketsBatchForElse() public {
         uint amount1 = 50;
         uint amount3 = 5;
@@ -188,6 +203,7 @@ contract EventTest is Test, ERC1155Holder {
         assertEq(e.remainingTickets(ticket3Id), ticket3MaxSupply - amount3);
     }
 
+    /// @dev Testing the batch buying of more tickets that the max supply
     function testBuyMoreTicketsThanMaxSupplyInBatch() public {
         uint amount1 = 50;
         uint amount3 = ticket3MaxSupply + 1;
@@ -204,6 +220,7 @@ contract EventTest is Test, ERC1155Holder {
         }(address(this), ids, amounts);
     }
 
+    /// @dev Testing the batch buying of tickets with invalid price
     function testBuyTicketsWithInvalidPriceInBatch() public {
         uint amount1 = 50;
         uint amount3 = 2;
@@ -225,6 +242,7 @@ contract EventTest is Test, ERC1155Holder {
         }(address(this), ids, amounts);
     }
 
+    /// @dev Testing the ending of sales by owner
     function testEndingTheSales() public {
         uint amount = 10;
 
@@ -244,6 +262,7 @@ contract EventTest is Test, ERC1155Holder {
         );
     }
 
+    /// @dev Testing the ending of sales by non owner
     function testNonOwnerEndingTheSales() public {
         uint amount = 10;
 
@@ -258,6 +277,7 @@ contract EventTest is Test, ERC1155Holder {
         e.endSales();
     }
 
+    /// @dev Testing the continuing of sales by owner
     function testContinuingTheSales() public {
         uint amount = 10;
 
@@ -278,6 +298,7 @@ contract EventTest is Test, ERC1155Holder {
         );
     }
 
+    /// @dev Testing the continuing of sales by non owner
     function testNonOwnerContinuingTheSales() public {
         uint amount = 10;
 
@@ -294,6 +315,7 @@ contract EventTest is Test, ERC1155Holder {
         e.continueSales();
     }
 
+    /// @dev Testing the ticket transfer on pause
     function testTicketTransferWhenPaused() public {
         uint amount = 10;
 
@@ -308,6 +330,7 @@ contract EventTest is Test, ERC1155Holder {
         e.safeTransferFrom(address(this), address(1), ticket1Id, amount, "");
     }
 
+    /// @dev Testing the funds transfer and withdraw
     function testRecievingAndWithdrawingEther() public {
         assertEq(address(e).balance, 0);
 

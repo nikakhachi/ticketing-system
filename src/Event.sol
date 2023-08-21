@@ -7,20 +7,29 @@ import "openzeppelin/security/Pausable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Supply.sol";
 
+/// @title Event Contract
+/// @author Nika Khachiashvili
 contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
+    /// @dev Custom Errors
     error InvalidPrice();
     error MaxSupplyReached();
 
+    /// @dev Ticket struct with data used for creating the event
     struct Ticket {
         uint256 id;
         uint256 price;
         uint256 maxSupply;
     }
 
-    mapping(uint256 => uint256) public ticketsWithPrice;
-    mapping(uint256 => uint256) public ticketsWithMaxSupply;
+    mapping(uint256 => uint256) public ticketsWithPrice; /// @dev Mapping of ticket id to ticket price
+    mapping(uint256 => uint256) public ticketsWithMaxSupply; /// @dev Mapping of ticket id to ticket max supply
+
+    /// @dev List of available ticket ids
     uint256[] public ticketIds;
 
+    /// @dev Contract constructor
+    /// @dev Is called only once on the deployment
+    /// @param tickets data about the tickets, including id, price and the amount
     constructor(Ticket[] memory tickets) ERC1155("") {
         uint256[] memory _ticketIds = new uint256[](tickets.length);
 
@@ -34,6 +43,10 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         ticketIds = _ticketIds;
     }
 
+    /// @notice Function for buying tickets
+    /// @param to address where the tickets will be sent
+    /// @param ticketId id of the ticket
+    /// @param amount amount of tickets to buy
     function buyTickets(
         address to,
         uint256 ticketId,
@@ -49,6 +62,10 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         _mint(to, ticketId, amount, "");
     }
 
+    /// @notice Function for buying tickets in batch
+    /// @param to address where the tickets will be sent
+    /// @param ids ids of the tickets
+    /// @param amounts amounts of tickets to buy
     function buyTicketsBatch(
         address to,
         uint256[] memory ids,
@@ -66,28 +83,39 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         _mintBatch(to, ids, amounts, "");
     }
 
+    /// @notice Function for getting the remaining tickets
+    /// @param ticketId id of the ticket
+    /// @return The amount of remaining tickets
     function remainingTickets(uint256 ticketId) public view returns (uint256) {
         return
             ticketsWithMaxSupply[ticketId] -
             ERC1155Supply.totalSupply(ticketId);
     }
 
+    /// @notice Function for getting the sold tickets
+    /// @param ticketId id of the ticket
+    /// @return The amount of sold tickets
     function soldTickets(uint256 ticketId) public view returns (uint256) {
         return ERC1155Supply.totalSupply(ticketId);
     }
 
+    /// @notice Owner's function for ending the ticket sales
     function endSales() public onlyOwner {
         _pause();
     }
 
+    /// @notice Owner's function for continuing the ticket sales
     function continueSales() public onlyOwner {
         _unpause();
     }
 
+    /// @notice Returns the version of the contract
+    /// @return The version of the contract
     function version() external pure virtual returns (string memory) {
         return "v1";
     }
 
+    /// @notice Owner's Function for withdrawing the funds from the contract to their address
     function withdrawFunds() public onlyOwner {
         (bool success, ) = payable(owner()).call{value: address(this).balance}(
             ""
@@ -97,6 +125,7 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
 
     receive() external payable {}
 
+    /// @dev Override required by Solidity for the OpenZeppelin
     function _beforeTokenTransfer(
         address operator,
         address from,

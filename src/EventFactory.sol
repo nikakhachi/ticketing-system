@@ -6,6 +6,8 @@ import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.s
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "./Event.sol";
 
+/// @title EventFactory Contract
+/// @author Nika Khachiashvili
 contract EventFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     event EventCreated(
         address indexed eventAddress,
@@ -18,11 +20,15 @@ contract EventFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         _disableInitializers();
     }
 
+    /// @dev Upgradeable Contract Initializer
+    /// @dev Can be called only once
     function initialize() public initializer {
         __Ownable_init();
         __UUPSUpgradeable_init();
     }
 
+    /// @notice Function for creating the event contract
+    /// @param tickets data about the tickets, including id, price and the amount
     function createEvent(
         Event.Ticket[] calldata tickets
     ) external virtual returns (address) {
@@ -32,10 +38,13 @@ contract EventFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return address(e);
     }
 
+    /// @notice Returns the version of the contract
+    /// @return The version of the contract
     function version() external pure virtual returns (string memory) {
         return "v1";
     }
 
+    /// @dev Function for upgrading the contract
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyOwner {}
