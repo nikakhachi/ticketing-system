@@ -28,13 +28,11 @@ contract EventTest is Test, ERC1155Holder {
     uint256[] public amounts;
 
     function setUp() public {
-        e = new Event();
-
         tickets.push(Event.Ticket(ticket1Id, ticket1Price, ticket1MaxSupply));
         tickets.push(Event.Ticket(ticket2Id, ticket2Price, ticket2MaxSupply));
         tickets.push(Event.Ticket(ticket3Id, ticket3Price, ticket3MaxSupply));
 
-        e.initialize(tickets);
+        e = new Event(tickets);
     }
 
     function testInitialVariables() public {

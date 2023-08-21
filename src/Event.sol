@@ -1,23 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/extensions/ERC1155BurnableUpgradeable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
-import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import "openzeppelin/token/ERC1155/ERC1155.sol";
+import "openzeppelin/access/Ownable.sol";
+import "openzeppelin/security/Pausable.sol";
+import "openzeppelin/token/ERC1155/extensions/ERC1155Burnable.sol";
+import "openzeppelin/token/ERC1155/extensions/ERC1155Supply.sol";
 
-contract Event is
-    Initializable,
-    ERC1155Upgradeable,
-    OwnableUpgradeable,
-    PausableUpgradeable,
-    ERC1155BurnableUpgradeable,
-    ERC1155SupplyUpgradeable,
-    UUPSUpgradeable
-{
+contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     error InvalidPrice();
     error MaxSupplyReached();
 
@@ -31,19 +21,7 @@ contract Event is
     mapping(uint256 => uint256) public ticketsWithMaxSupply;
     uint256[] public ticketIds;
 
-    // /// @custom:oz-upgrades-unsafe-allow constructor
-    // constructor() {
-    //     _disableInitializers();
-    // }
-
-    function initialize(Ticket[] calldata tickets) public initializer {
-        __ERC1155_init("");
-        __Ownable_init();
-        __Pausable_init();
-        __ERC1155Burnable_init();
-        __ERC1155Supply_init();
-        __UUPSUpgradeable_init();
-
+    constructor(Ticket[] memory tickets) ERC1155("") {
         uint256[] memory _ticketIds = new uint256[](tickets.length);
 
         for (uint256 i; i < tickets.length; i++) {
@@ -64,7 +42,7 @@ contract Event is
         if (msg.value != ticketsWithPrice[ticketId] * amount)
             revert InvalidPrice();
         if (
-            ERC1155SupplyUpgradeable.totalSupply(ticketId) + amount >
+            ERC1155Supply.totalSupply(ticketId) + amount >
             ticketsWithMaxSupply[ticketId]
         ) revert MaxSupplyReached();
 
@@ -80,7 +58,7 @@ contract Event is
         for (uint256 i; i < ids.length; i++) {
             overallPrice += ticketsWithPrice[ids[i]] * amounts[i];
             if (
-                ERC1155SupplyUpgradeable.totalSupply(ids[i]) + amounts[i] >
+                ERC1155Supply.totalSupply(ids[i]) + amounts[i] >
                 ticketsWithMaxSupply[ids[i]]
             ) revert MaxSupplyReached();
         }
@@ -89,7 +67,7 @@ contract Event is
     }
 
     function soldTickets(uint256 ticketId) public view returns (uint256) {
-        return ERC1155SupplyUpgradeable.totalSupply(ticketId);
+        return ERC1155Supply.totalSupply(ticketId);
     }
 
     function endSales() public onlyOwner {
@@ -107,11 +85,7 @@ contract Event is
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) internal override(ERC1155Upgradeable, ERC1155SupplyUpgradeable) {
+    ) internal override(ERC1155, ERC1155Supply) {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
-
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyOwner {}
 }
