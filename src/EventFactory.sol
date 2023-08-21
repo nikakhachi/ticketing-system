@@ -25,11 +25,15 @@ contract EventFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function createEvent(
         Event.Ticket[] calldata tickets
-    ) external returns (address) {
+    ) external virtual returns (address) {
         Event e = new Event(tickets);
         e.transferOwnership(msg.sender);
         emit EventCreated(address(e), msg.sender, block.timestamp);
         return address(e);
+    }
+
+    function version() external pure virtual returns (string memory) {
+        return "v1";
     }
 
     function _authorizeUpgrade(

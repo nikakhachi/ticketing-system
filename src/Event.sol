@@ -88,4 +88,8 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     ) internal override(ERC1155, ERC1155Supply) {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
+
+    function version() external pure virtual returns (string memory) {
+        return "v1";
+    }
 }
