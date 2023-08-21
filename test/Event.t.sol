@@ -49,32 +49,39 @@ contract EventTest is Test, ERC1155Holder {
         }
     }
 
-    function testBuyTickets() public {
-        uint amount = 22;
-
-        e.buyTickets{value: amount * ticket1Price}(
+    function testBuyTicketsFuzz(uint _amount) public {
+        vm.assume(_amount <= ticket1MaxSupply);
+        e.buyTickets{value: _amount * ticket1Price}(
             address(this),
             ticket1Id,
-            amount
+            _amount
         );
 
-        assertEq(e.balanceOf(address(this), ticket1Id), amount);
-        assertEq(e.soldTickets(ticket1Id), amount);
+        assertEq(e.balanceOf(address(this), ticket1Id), _amount);
+        assertEq(e.soldTickets(ticket1Id), _amount);
     }
 
-    function testBuyTicketsForElse() public {
-        uint amount = 22;
+    function testBuyTicketsForElseFuzz(uint _amount) public {
+        vm.assume(_amount <= ticket1MaxSupply);
+
         address receiver = address(1);
 
-        e.buyTickets{value: amount * ticket1Price}(receiver, ticket1Id, amount);
+        e.buyTickets{value: _amount * ticket1Price}(
+            receiver,
+            ticket1Id,
+            _amount
+        );
 
-        assertEq(e.balanceOf(receiver, ticket1Id), amount);
-        assertEq(e.soldTickets(ticket1Id), amount);
+        assertEq(e.balanceOf(receiver, ticket1Id), _amount);
+        assertEq(e.soldTickets(ticket1Id), _amount);
     }
 
-    function testBuyMoreTicketsThanMaxSupply() public {
+    function testBuyMoreTicketsThanMaxSupplyFuzz(uint amount2) public {
+        vm.assume(
+            amount2 > ticket1MaxSupply / 2 && amount2 < ticket1MaxSupply * 10
+        );
+
         uint amount1 = ticket1MaxSupply / 2;
-        uint amount2 = ticket1MaxSupply / 2 + 1;
 
         e.buyTickets{value: amount1 * ticket1Price}(
             address(this),
@@ -90,18 +97,19 @@ contract EventTest is Test, ERC1155Holder {
         );
     }
 
-    function testBuyTicketsWithInvalidPrice() public {
+    function testBuyTicketsWithInvalidPriceFuzz(uint priceDelta) public {
         uint amount = 22;
+        vm.assume(priceDelta > 0 && priceDelta < amount * ticket1Price);
 
         vm.expectRevert(Event.InvalidPrice.selector);
-        e.buyTickets{value: amount * ticket1Price - 1}(
+        e.buyTickets{value: amount * ticket1Price - priceDelta}(
             address(this),
             ticket1Id,
             amount
         );
 
         vm.expectRevert(Event.InvalidPrice.selector);
-        e.buyTickets{value: amount * ticket1Price + 1}(
+        e.buyTickets{value: amount * ticket1Price + priceDelta}(
             address(this),
             ticket1Id,
             amount
