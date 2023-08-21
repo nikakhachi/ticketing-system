@@ -107,11 +107,7 @@ contract Event is
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    )
-        internal
-        override(ERC1155Upgradeable, ERC1155SupplyUpgradeable)
-        whenNotPaused
-    {
+    ) internal override(ERC1155Upgradeable, ERC1155SupplyUpgradeable) {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
