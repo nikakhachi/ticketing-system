@@ -29,18 +29,23 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
 
     /// @dev Contract constructor
     /// @dev Is called only once on the deployment
-    /// @param tickets data about the tickets, including id, price and the amount
-    constructor(Ticket[] memory tickets) ERC1155("") {
-        uint256[] memory _ticketIds = new uint256[](tickets.length);
+    /// @param _tickets data about the tickets, including id, price and the amount
+    constructor(Ticket[] memory _tickets) ERC1155("") {
+        uint length = _tickets.length;
 
-        for (uint256 i; i < tickets.length; ++i) {
-            Ticket memory ticket = tickets[i];
+        for (uint256 i; i < length; ++i) {
+            Ticket memory ticket = _tickets[i];
+
+            /// @dev Instead of 2 mappings, I've also tested using mapping => struct, but
+            /// @dev it was more expensive for users, so here's the current, cheaper implementation
             ticketsWithPrice[ticket.id] = ticket.price;
             ticketsWithMaxSupply[ticket.id] = ticket.maxSupply;
-            _ticketIds[i] = ticket.id;
-        }
 
-        ticketIds = _ticketIds;
+            /// @dev I've tested pushing in the loop like it's here vs
+            /// @dev creating a memory array and updating the state at the end
+            /// @dev But current implementation is cheaper
+            ticketIds.push(ticket.id);
+        }
     }
 
     /// @notice Function for buying tickets
