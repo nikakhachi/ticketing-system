@@ -18,6 +18,9 @@ contract Event is
     ERC1155SupplyUpgradeable,
     UUPSUpgradeable
 {
+    error InvalidPrice();
+    error MaxSupplyReached();
+
     struct Ticket {
         uint256 id;
         uint256 price;
@@ -58,15 +61,13 @@ contract Event is
         uint256 ticketId,
         uint256 amount
     ) public payable whenNotPaused {
-        require(
-            msg.value == ticketsWithPrice[ticketId] * amount,
-            "Invalid price"
-        );
-        require(
-            ERC1155SupplyUpgradeable.totalSupply(ticketId) + amount <=
-                ticketsWithMaxSupply[ticketId],
-            "Max supply reached"
-        );
+        if (msg.value != ticketsWithPrice[ticketId] * amount)
+            revert InvalidPrice();
+        if (
+            ERC1155SupplyUpgradeable.totalSupply(ticketId) + amount >
+            ticketsWithMaxSupply[ticketId]
+        ) revert MaxSupplyReached();
+
         _mint(to, ticketId, amount, "");
     }
 
@@ -79,13 +80,12 @@ contract Event is
         uint256 overallPrice;
         for (uint256 i; i < ids.length; i++) {
             overallPrice += ticketsWithPrice[ids[i]] * amounts[i];
-            require(
-                ERC1155SupplyUpgradeable.totalSupply(ids[i]) + amounts[i] <=
-                    ticketsWithMaxSupply[ids[i]],
-                "Max supply reached"
-            );
+            if (
+                ERC1155SupplyUpgradeable.totalSupply(ids[i]) + amounts[i] >
+                ticketsWithMaxSupply[ids[i]]
+            ) revert MaxSupplyReached();
         }
-        require(msg.value == overallPrice, "Invalid price");
+        if (msg.value != overallPrice) revert InvalidPrice();
         _mintBatch(to, ids, amounts, data);
     }
 
