@@ -28,10 +28,10 @@ contract Event is
     mapping(uint256 => uint256) public ticketsWithMaxSupply;
     uint256[] public ticketIds;
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
+    // /// @custom:oz-upgrades-unsafe-allow constructor
+    // constructor() {
+    //     _disableInitializers();
+    // }
 
     function initialize(Ticket[] calldata tickets) public initializer {
         __ERC1155_init("");
@@ -53,7 +53,7 @@ contract Event is
         ticketIds = _ticketIds;
     }
 
-    function mint(
+    function buyTickets(
         address to,
         uint256 ticketId,
         uint256 amount
@@ -70,7 +70,7 @@ contract Event is
         _mint(to, ticketId, amount, "");
     }
 
-    function mintBatch(
+    function buyTicketsBatch(
         address to,
         uint256[] memory ids,
         uint256[] memory amounts,
