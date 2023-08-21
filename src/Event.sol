@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "openzeppelin/token/ERC1155/ERC1155Upgradeable.sol";
-import "openzeppelin/access/AccessControlUpgradeable.sol";
+import "openzeppelin/access/OwnableUpgradeable.sol";
 import "openzeppelin/security/PausableUpgradeable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155BurnableUpgradeable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
@@ -12,56 +12,62 @@ import "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 contract Event is
     Initializable,
     ERC1155Upgradeable,
-    AccessControlUpgradeable,
+    OwnableUpgradeable,
     PausableUpgradeable,
     ERC1155BurnableUpgradeable,
     ERC1155SupplyUpgradeable,
     UUPSUpgradeable
 {
-    bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    struct Ticket {
+        uint256 id;
+        uint256 price;
+        uint256 maxSupply;
+    }
+
+    mapping(uint256 => uint256) public ticketsWithPrice;
+    mapping(uint256 => uint256) public ticketsWithMaxSupply;
+    uint256[] public ticketIds;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize(Ticket[] calldata tickets) public initializer {
         __ERC1155_init("");
-        __AccessControl_init();
+        __Ownable_init();
         __Pausable_init();
         __ERC1155Burnable_init();
         __ERC1155Supply_init();
         __UUPSUpgradeable_init();
 
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(URI_SETTER_ROLE, msg.sender);
-        _grantRole(PAUSER_ROLE, msg.sender);
-        _grantRole(MINTER_ROLE, msg.sender);
-        _grantRole(UPGRADER_ROLE, msg.sender);
-    }
+        uint256[] memory _ticketIds = new uint256[](tickets.length);
 
-    function setURI(string memory newuri) public onlyRole(URI_SETTER_ROLE) {
-        _setURI(newuri);
-    }
+        for (uint256 i; i < tickets.length; i++) {
+            Ticket memory ticket = tickets[i];
+            ticketsWithPrice[ticket.id] = ticket.price;
+            ticketsWithMaxSupply[ticket.id] = ticket.maxSupply;
+            _ticketIds[i] = ticket.id;
+        }
 
-    function pause() public onlyRole(PAUSER_ROLE) {
-        _pause();
-    }
-
-    function unpause() public onlyRole(PAUSER_ROLE) {
-        _unpause();
+        ticketIds = _ticketIds;
     }
 
     function mint(
-        address account,
-        uint256 id,
-        uint256 amount,
-        bytes memory data
-    ) public onlyRole(MINTER_ROLE) {
-        _mint(account, id, amount, data);
+        address to,
+        uint256 ticketId,
+        uint256 amount
+    ) public payable whenNotPaused {
+        require(
+            msg.value == ticketsWithPrice[ticketId] * amount,
+            "Invalid price"
+        );
+        require(
+            ERC1155SupplyUpgradeable.totalSupply(ticketId) + amount <=
+                ticketsWithMaxSupply[ticketId],
+            "Max supply reached"
+        );
+        _mint(to, ticketId, amount, "");
     }
 
     function mintBatch(
@@ -69,8 +75,30 @@ contract Event is
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) public onlyRole(MINTER_ROLE) {
+    ) public payable whenNotPaused {
+        uint256 overallPrice;
+        for (uint256 i; i < ids.length; i++) {
+            overallPrice += ticketsWithPrice[ids[i]] * amounts[i];
+            require(
+                ERC1155SupplyUpgradeable.totalSupply(ids[i]) + amounts[i] <=
+                    ticketsWithMaxSupply[ids[i]],
+                "Max supply reached"
+            );
+        }
+        require(msg.value == overallPrice, "Invalid price");
         _mintBatch(to, ids, amounts, data);
+    }
+
+    function soldTickets(uint256 ticketId) public view returns (uint256) {
+        return ERC1155SupplyUpgradeable.totalSupply(ticketId);
+    }
+
+    function endSales() public onlyOwner {
+        _pause();
+    }
+
+    function continueSales() public onlyOwner {
+        _unpause();
     }
 
     function _beforeTokenTransfer(
@@ -90,18 +118,5 @@ contract Event is
 
     function _authorizeUpgrade(
         address newImplementation
-    ) internal override onlyRole(UPGRADER_ROLE) {}
-
-    // The following functions are overrides required by Solidity.
-
-    function supportsInterface(
-        bytes4 interfaceId
-    )
-        public
-        view
-        override(ERC1155Upgradeable, AccessControlUpgradeable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
+    ) internal override onlyOwner {}
 }
