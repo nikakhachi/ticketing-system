@@ -52,47 +52,47 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     /// @notice Function for buying tickets
     /// @param to address where the tickets will be sent
     /// @param ticketId id of the ticket
-    /// @param amount amount of tickets to buy
+    /// @param quantity quantity of tickets to buy
     function buyTickets(
         address to,
         uint256 ticketId,
-        uint256 amount
+        uint256 quantity
     ) public payable whenNotPaused {
-        if (msg.value != ticketsWithPrice[ticketId] * amount)
+        if (msg.value != ticketsWithPrice[ticketId] * quantity)
             revert InvalidPrice();
         if (
-            ERC1155Supply.totalSupply(ticketId) + amount >
+            ERC1155Supply.totalSupply(ticketId) + quantity >
             ticketsWithMaxSupply[ticketId]
         ) revert MaxSupplyReached();
 
-        _mint(to, ticketId, amount, "");
+        _mint(to, ticketId, quantity, "");
     }
 
     /// @notice Function for buying tickets in batch
     /// @param to address where the tickets will be sent
     /// @param ids ids of the tickets
-    /// @param amounts amounts of tickets to buy
+    /// @param quantities amounts of tickets to buy
     // TODO: VULNERABILITY: user can include same ids multiple times in the array and get more tickets than the maximum supply
     function buyTicketsBatch(
         address to,
         uint256[] memory ids,
-        uint256[] memory amounts
+        uint256[] memory quantities
     ) public payable whenNotPaused {
         uint256 overallPrice;
         for (uint256 i; i < ids.length; ++i) {
-            uint256 ticketAmount = amounts[i];
+            uint256 ticketQuantity = quantities[i];
 
-            overallPrice += ticketsWithPrice[ids[i]] * ticketAmount;
+            overallPrice += ticketsWithPrice[ids[i]] * ticketQuantity;
 
             if (
-                ERC1155Supply.totalSupply(ids[i]) + ticketAmount >
+                ERC1155Supply.totalSupply(ids[i]) + ticketQuantity >
                 ticketsWithMaxSupply[ids[i]]
             ) {
                 revert MaxSupplyReached();
             }
         }
         if (msg.value != overallPrice) revert InvalidPrice();
-        _mintBatch(to, ids, amounts, "");
+        _mintBatch(to, ids, quantities, "");
     }
 
     /// @notice Function for getting the remaining tickets
