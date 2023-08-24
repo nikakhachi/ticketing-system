@@ -6,6 +6,7 @@ import "openzeppelin/access/Ownable.sol";
 import "openzeppelin/security/Pausable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Supply.sol";
+import "./UC.sol";
 
 /// @title Event Contract
 /// @author Nika Khachiashvili
@@ -33,8 +34,8 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     constructor(Ticket[] memory _tickets) ERC1155("") {
         uint length = _tickets.length;
 
-        for (uint256 i; i < length; ++i) {
-            Ticket memory ticket = _tickets[i];
+        for (UC i = ZERO; i < uc(length); i = i + ONE) {
+            Ticket memory ticket = _tickets[i.unwrap()];
 
             /// @dev Instead of 2 mappings, I've also tested using mapping => struct, but
             /// @dev it was more expensive for users, so here's the current, cheaper implementation
