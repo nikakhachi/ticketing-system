@@ -72,6 +72,7 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     /// @param to address where the tickets will be sent
     /// @param ids ids of the tickets
     /// @param amounts amounts of tickets to buy
+    // TODO: VULNERABILITY: user can include same ids multiple times in the array and get more tickets than the maximum supply
     function buyTicketsBatch(
         address to,
         uint256[] memory ids,
