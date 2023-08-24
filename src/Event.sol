@@ -75,18 +75,19 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
     // TODO: VULNERABILITY: user can include same ids multiple times in the array and get more tickets than the maximum supply
     function buyTicketsBatch(
         address to,
-        uint256[] memory ids,
-        uint256[] memory quantities
+        uint256[] calldata ids,
+        uint256[] calldata quantities
     ) public payable whenNotPaused {
         uint256 overallPrice;
         for (uint256 i; i < ids.length; ++i) {
             uint256 ticketQuantity = quantities[i];
+            uint256 ticketId = ids[i];
 
-            overallPrice += ticketsWithPrice[ids[i]] * ticketQuantity;
+            overallPrice += ticketsWithPrice[ticketId] * ticketQuantity;
 
             if (
-                ERC1155Supply.totalSupply(ids[i]) + ticketQuantity >
-                ticketsWithMaxSupply[ids[i]]
+                ERC1155Supply.totalSupply(ticketId) + ticketQuantity >
+                ticketsWithMaxSupply[ticketId]
             ) {
                 revert MaxSupplyReached();
             }
