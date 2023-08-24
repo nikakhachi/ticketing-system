@@ -9,7 +9,7 @@ const main = async () => {
 
   // User1 wants to make a musical event and for the ticketing system he wants to use the EventFactory contract.
   // He wants 3 types of tickets: Silver, Gold and Platinum. Price and the supply is respective to the type.
-  const tx1 = await eventFactory.createEvent([
+  const tx1 = await eventFactory.createEvent("", [
     { id: 1, price: ethers.parseEther("1"), maxSupply: 200 },
     { id: 2, price: ethers.parseEther("2"), maxSupply: 100 },
     { id: 3, price: ethers.parseEther("10"), maxSupply: 10 },

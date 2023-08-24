@@ -30,9 +30,10 @@ contract EventFactory is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /// @notice Function for creating the event contract
     /// @param tickets data about the tickets, including id, price and the amount
     function createEvent(
+        string memory _uri,
         Event.Ticket[] calldata tickets
     ) external virtual returns (address) {
-        Event e = new Event(tickets);
+        Event e = new Event(_uri, tickets);
         e.transferOwnership(msg.sender);
         emit EventCreated(address(e), msg.sender, block.timestamp);
         return address(e);

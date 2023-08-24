@@ -10,7 +10,7 @@ const main = async () => {
 
   console.log(`Event Factory Version -- ${await eventFactoryV2.version()} --  Implementation has been Deployed`);
 
-  const tx = await eventFactoryV2.createEvent([
+  const tx = await eventFactoryV2.createEvent("", [
     { id: 1, price: ethers.parseEther("1"), maxSupply: 200 },
     { id: 2, price: ethers.parseEther("2"), maxSupply: 100 },
     { id: 3, price: ethers.parseEther("10"), maxSupply: 500 },

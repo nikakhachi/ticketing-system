@@ -48,7 +48,7 @@ contract EventTest is Test, ERC1155Holder {
         tickets.push(Event.Ticket(ticket3Id, ticket3Price, ticket3MaxSupply));
 
         eFactory = new EventFactory();
-        e = Event(payable(eFactory.createEvent(tickets)));
+        e = Event(payable(eFactory.createEvent("", tickets)));
         e.acceptOwnership();
     }
 
@@ -69,7 +69,7 @@ contract EventTest is Test, ERC1155Holder {
     function testCreateEventFromFactory() public {
         vm.expectEmit(false, true, true, false);
         emit EventCreated(address(0), address(this), block.timestamp);
-        Event _e = Event(payable(eFactory.createEvent(tickets)));
+        Event _e = Event(payable(eFactory.createEvent("", tickets)));
         _e.acceptOwnership();
 
         for (uint i = 0; i < tickets.length; i++) {

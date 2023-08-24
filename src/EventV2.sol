@@ -9,7 +9,10 @@ contract EventV2 is Event {
     /// @dev Contract constructor
     /// @dev Is called only once on the deployment
     /// @param tickets data about the tickets, including id, price and the amount
-    constructor(Ticket[] memory tickets) Event(tickets) {}
+    constructor(
+        string memory _uri,
+        Ticket[] memory tickets
+    ) Event(_uri, tickets) {}
 
     /// @notice Returns the version of the contract
     /// @return The version of the contract

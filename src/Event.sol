@@ -37,7 +37,7 @@ contract Event is
     /// @dev Contract constructor
     /// @dev Is called only once on the deployment
     /// @param _tickets data about the tickets, including id, price and the amount
-    constructor(Ticket[] memory _tickets) ERC1155("") {
+    constructor(string memory _uri, Ticket[] memory _tickets) ERC1155(_uri) {
         uint length = _tickets.length;
 
         for (UC i = ZERO; i < uc(length); i = i + ONE) {
