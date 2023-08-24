@@ -19,6 +19,11 @@ const main = async () => {
   const eventAddress = receipt.logs[receipt.logs.length - 1].args[0];
   const event = await ethers.getContractAt("Event", eventAddress);
 
+  {
+    const tx = await event.acceptOwnership();
+    await tx.wait();
+  }
+
   console.log(`Created Event Version is: ${await event.version()}`);
 };
 

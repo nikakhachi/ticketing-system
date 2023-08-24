@@ -18,6 +18,11 @@ const main = async () => {
   const eventAddress = receipt1.logs[receipt1.logs.length - 1].args[0];
   const event = await ethers.getContractAt("Event", eventAddress);
 
+  {
+    const tx = await event.acceptOwnership();
+    await tx.wait();
+  }
+
   // User2 wants to buy 2 tickets of Gold type (id 2) for him and his wife (User3).
   // He buys them and then transfers the ownership of one of the tickets to his wife.
   const tx2 = await event.connect(user2).buyTickets(user2.address, 2, 2, { value: ethers.parseEther("4") });
