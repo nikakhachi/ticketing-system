@@ -10,7 +10,7 @@ contract EventFactoryV2 is EventFactory {
     /// @notice Function for creating the event contract
     /// @param tickets data about the tickets, including id, price and the amount
     function createEvent(
-        string memory _uri,
+        string calldata _uri,
         Event.Ticket[] calldata tickets
     ) external override returns (address) {
         Event e = new EventV2(_uri, tickets);
