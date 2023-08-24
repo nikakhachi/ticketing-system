@@ -49,6 +49,7 @@ contract EventTest is Test, ERC1155Holder {
 
         eFactory = new EventFactory();
         e = Event(payable(eFactory.createEvent(tickets)));
+        e.acceptOwnership();
     }
 
     /// @dev Testing the initial variables
@@ -69,6 +70,7 @@ contract EventTest is Test, ERC1155Holder {
         vm.expectEmit(false, true, true, false);
         emit EventCreated(address(0), address(this), block.timestamp);
         Event _e = Event(payable(eFactory.createEvent(tickets)));
+        _e.acceptOwnership();
 
         for (uint i = 0; i < tickets.length; i++) {
             uint id = tickets[i].id;

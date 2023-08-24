@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "openzeppelin/token/ERC1155/ERC1155.sol";
-import "openzeppelin/access/Ownable.sol";
+import "openzeppelin/access/Ownable2Step.sol";
 import "openzeppelin/security/Pausable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Supply.sol";
@@ -10,7 +10,13 @@ import "./UC.sol";
 
 /// @title Event Contract
 /// @author Nika Khachiashvili
-contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
+contract Event is
+    ERC1155,
+    Ownable2Step,
+    Pausable,
+    ERC1155Burnable,
+    ERC1155Supply
+{
     /// @dev Custom Errors
     error InvalidPrice();
     error MaxSupplyReached();
