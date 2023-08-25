@@ -52,7 +52,7 @@ contract EventTest is Test, ERC1155Holder {
         tickets.push(Event.Ticket(ticket3Id, ticket3Price, ticket3MaxSupply));
 
         eFactory = new EventFactory();
-        e = Event(payable(eFactory.createEvent("", tickets)));
+        e = Event(payable(eFactory.createEvent("", tickets, 100)));
         e.acceptOwnership();
     }
 

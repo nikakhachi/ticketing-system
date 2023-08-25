@@ -8,12 +8,15 @@ import "./EventV2.sol";
 /// @author Nika Khachiashvili
 contract EventFactoryV2 is EventFactory {
     /// @notice Function for creating the event contract
+    /// @param _uri uri of the event
     /// @param tickets data about the tickets, including id, price and the amount
+    /// @param _transferFee transfer fee percentage
     function createEvent(
         string calldata _uri,
-        Event.Ticket[] calldata tickets
+        Event.Ticket[] calldata tickets,
+        uint16 _transferFee
     ) external override returns (address) {
-        Event e = new EventV2(_uri, tickets);
+        Event e = new EventV2(_uri, tickets, _transferFee);
         e.transferOwnership(msg.sender);
         emit EventCreated(address(e), msg.sender, block.timestamp);
         return address(e);

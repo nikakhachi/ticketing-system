@@ -26,7 +26,7 @@ contract DeploymentTest is EventTest {
     function testCreateEventFromFactory() public {
         vm.expectEmit(false, true, true, false);
         emit EventCreated(address(0), address(this), block.timestamp);
-        Event _e = Event(payable(eFactory.createEvent("", tickets)));
+        Event _e = Event(payable(eFactory.createEvent("", tickets, 100)));
         _e.acceptOwnership();
 
         for (uint i = 0; i < tickets.length; i++) {
@@ -38,5 +38,7 @@ contract DeploymentTest is EventTest {
             assertEq(_e.ticketsWithMaxSupply(id), maxSupply);
             assertEq(_e.ticketIds(i), id);
         }
+
+        assertEq(e.TRANSFER_FEE_PERCENTAGE(), 100);
     }
 }

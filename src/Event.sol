@@ -25,7 +25,7 @@ contract Event is
     using SafeERC20 for ERC20;
 
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    uint8 public constant TRANSFER_FEE_PERCENTAGE = 1; /// @dev 1% transfer fee
+    uint16 public immutable TRANSFER_FEE_PERCENTAGE; /// @dev 1 = 0.01% transfer fee
 
     FeedRegistryInterface public constant CHAINLINK_FEED_REGISTRY =
         FeedRegistryInterface(0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf);
@@ -51,8 +51,14 @@ contract Event is
 
     /// @dev Contract constructor
     /// @dev Is called only once on the deployment
+    /// @param _uri uri of the event
     /// @param _tickets data about the tickets, including id, price and the amount
-    constructor(string memory _uri, Ticket[] memory _tickets) ERC1155(_uri) {
+    /// @param _transferFee transfer fee percentage
+    constructor(
+        string memory _uri,
+        Ticket[] memory _tickets,
+        uint16 _transferFee
+    ) ERC1155(_uri) {
         uint length = _tickets.length;
 
         for (UC i = ZERO; i < uc(length); i = i + ONE) {
@@ -68,6 +74,8 @@ contract Event is
             /// @dev But current implementation is cheaper
             ticketIds.push(ticket.id);
         }
+
+        TRANSFER_FEE_PERCENTAGE = _transferFee;
     }
 
     /// @notice Function for buying tickets
