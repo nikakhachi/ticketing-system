@@ -255,8 +255,9 @@ contract Event is
         bytes memory data
     ) internal override(ERC1155) {
         uint256 overallValue;
-        for (uint i = 0; i < ids.length; i++) {
-            overallValue += ticketsWithPrice[ids[i]] * amounts[i];
+        for (UC i = ZERO; i < uc(ids.length); i = i + ONE) {
+            uint index = i.unwrap();
+            overallValue += ticketsWithPrice[ids[index]] * amounts[index];
         }
         ERC20(WETH).safeTransferFrom(
             msg.sender,
