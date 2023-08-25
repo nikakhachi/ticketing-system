@@ -20,6 +20,8 @@ contract EventTest is Test, ERC1155Holder {
         uint256 indexed timestamp
     );
 
+    address public constant LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
+
     Event public e;
     EventFactory public eFactory;
 

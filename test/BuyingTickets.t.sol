@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "./Event.t.sol";
+import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 
 /**
  * @title BuyingTicketsTest Contract
@@ -168,5 +169,57 @@ contract BuyingTicketsTest is EventTest {
         e.buyTicketsBatch{
             value: amount1 * ticket1Price + amount3 * ticket3Price - 1
         }(address(this), ids, amounts);
+    }
+
+    /// @dev Testing the buying of tickets with token
+    function testBuyTicketsWithTokenFuzz(uint256 quantity) public {
+        vm.assume(quantity <= ticket1MaxSupply);
+
+        ERC20 token = ERC20(LINK);
+
+        uint256 startingTokenBalance = 1000000 * 10 ** token.decimals();
+
+        deal(address(token), address(this), startingTokenBalance);
+
+        uint256 ticketPriceInToken = e.ticketPriceInToken(LINK, 1, quantity);
+
+        token.approve(address(e), ticketPriceInToken);
+
+        e.buyTicketsWithToken(address(this), LINK, ticket1Id, quantity);
+
+        assertEq(e.balanceOf(address(this), 1), quantity);
+        assertEq(
+            token.balanceOf(address(this)),
+            startingTokenBalance - ticketPriceInToken
+        );
+    }
+
+    /// @dev Testing the buying of tickets with token
+    function testBuyTicketsWithTokenForInvalidPriceFuzz(
+        uint256 quantity
+    ) public {
+        vm.assume(quantity <= ticket1MaxSupply && quantity > 0);
+
+        ERC20 token = ERC20(LINK);
+
+        uint256 startingTokenBalance = 1000000 * 10 ** token.decimals();
+        deal(address(token), address(this), startingTokenBalance);
+
+        vm.expectRevert(bytes("SafeERC20: low-level call failed"));
+        e.buyTicketsWithToken(address(this), LINK, ticket1Id, quantity);
+
+        uint256 ticketPriceInToken = e.ticketPriceInToken(LINK, 1, quantity);
+        token.approve(address(e), ticketPriceInToken - 1);
+
+        vm.expectRevert(bytes("SafeERC20: low-level call failed"));
+        e.buyTicketsWithToken(address(this), LINK, ticket1Id, quantity);
+    }
+
+    /// @dev Testing the buying of tickets with token
+    function testBuyTicketsWithTokenForMaxSupplyFuzz(uint256 quantity) public {
+        vm.assume(quantity > ticket1MaxSupply);
+
+        vm.expectRevert(Event.MaxSupplyReached.selector);
+        e.buyTicketsWithToken(address(this), LINK, ticket1Id, quantity);
     }
 }

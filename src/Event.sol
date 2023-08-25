@@ -6,7 +6,12 @@ import "openzeppelin/access/Ownable2Step.sol";
 import "openzeppelin/security/Pausable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Supply.sol";
+import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import {SafeERC20} from "openzeppelin/token/ERC20/utils/SafeERC20.sol";
+import "chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "./UC.sol";
+// console
+import "forge-std/console.sol";
 
 /// @title Event Contract
 /// @author Nika Khachiashvili
@@ -17,6 +22,13 @@ contract Event is
     ERC1155Burnable,
     ERC1155Supply
 {
+    using SafeERC20 for ERC20;
+
+    FeedRegistryInterface public constant CHAINLINK_FEED_REGISTRY =
+        FeedRegistryInterface(0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf);
+    address public constant CHAINLINK_ETH_DENOMINATION_ =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
     /// @dev Custom Errors
     error InvalidPrice();
     error MaxSupplyReached();
@@ -72,6 +84,59 @@ contract Event is
         ) revert MaxSupplyReached();
 
         _mint(to, ticketId, quantity, "");
+    }
+
+    /// @notice Function for buying tickets
+    /// @param _to address where the tickets will be sent
+    /// @param _token payment oken
+    /// @param _ticketId id of the ticket
+    /// @param _quantity quantity of tickets to buy
+    function buyTicketsWithToken(
+        address _to,
+        address _token,
+        uint256 _ticketId,
+        uint256 _quantity
+    ) external whenNotPaused {
+        if (
+            ERC1155Supply.totalSupply(_ticketId) + _quantity >
+            ticketsWithMaxSupply[_ticketId]
+        ) revert MaxSupplyReached();
+
+        (, int tokenPriceInEth, , , ) = CHAINLINK_FEED_REGISTRY.latestRoundData(
+            _token,
+            CHAINLINK_ETH_DENOMINATION_
+        );
+
+        ERC20 token = ERC20(_token);
+
+        token.safeTransferFrom(
+            msg.sender,
+            address(this),
+            ((ticketsWithPrice[_ticketId] *
+                _quantity *
+                10 ** ERC20(_token).decimals()) / uint256(tokenPriceInEth))
+        );
+
+        _mint(_to, _ticketId, _quantity, "");
+    }
+
+    /// @notice Function for getting ticket price in provided token
+    /// @param _token payment oken
+    /// @param _ticketId id of the ticket
+    /// @return The price of the ticket in provided token
+    function ticketPriceInToken(
+        address _token,
+        uint256 _ticketId,
+        uint256 _quantity
+    ) external view returns (uint256) {
+        (, int tokenPriceInEth, , , ) = CHAINLINK_FEED_REGISTRY.latestRoundData(
+            _token,
+            CHAINLINK_ETH_DENOMINATION_
+        );
+
+        return ((ticketsWithPrice[_ticketId] *
+            _quantity *
+            10 ** ERC20(_token).decimals()) / uint256(tokenPriceInEth));
     }
 
     /// @notice Function for buying tickets in batch
