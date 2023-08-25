@@ -24,6 +24,9 @@ contract Event is
 {
     using SafeERC20 for ERC20;
 
+    address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    uint8 public constant TRANSFER_FEE_PERCENTAGE = 1; /// @dev 1% transfer fee
+
     FeedRegistryInterface public constant CHAINLINK_FEED_REGISTRY =
         FeedRegistryInterface(0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf);
     address public constant CHAINLINK_ETH_DENOMINATION_ =
@@ -219,5 +222,39 @@ contract Event is
         bytes memory data
     ) internal override(ERC1155, ERC1155Supply) {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
+
+    function _safeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes memory data
+    ) internal override(ERC1155) {
+        ERC20(WETH).safeTransferFrom(
+            msg.sender,
+            address(this),
+            (ticketsWithPrice[id] * TRANSFER_FEE_PERCENTAGE * amount) / 100
+        );
+        super._safeTransferFrom(from, to, id, amount, data);
+    }
+
+    function _safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) internal override(ERC1155) {
+        uint256 overallValue;
+        for (uint i = 0; i < ids.length; i++) {
+            overallValue += ticketsWithPrice[ids[i]] * amounts[i];
+        }
+        ERC20(WETH).safeTransferFrom(
+            msg.sender,
+            address(this),
+            (overallValue * TRANSFER_FEE_PERCENTAGE) / 100
+        );
+        super._safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 }

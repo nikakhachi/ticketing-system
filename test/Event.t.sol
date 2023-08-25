@@ -6,6 +6,7 @@ import "../src/Event.sol";
 import "../src/EventFactory.sol";
 
 import "openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
+import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 
 /**
  * @title EventTest Contract
@@ -21,6 +22,7 @@ contract EventTest is Test, ERC1155Holder {
     );
 
     address public constant LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
+    address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     Event public e;
     EventFactory public eFactory;

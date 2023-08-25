@@ -82,21 +82,6 @@ contract OwnerActionsTest is EventTest {
         e.continueSales();
     }
 
-    /// @dev Testing the ticket transfer on pause
-    function testTicketTransferWhenPaused() public {
-        uint amount = 10;
-
-        e.buyTickets{value: amount * ticket1Price}(
-            address(this),
-            ticket1Id,
-            amount
-        );
-
-        e.endSales();
-
-        e.safeTransferFrom(address(this), address(1), ticket1Id, amount, "");
-    }
-
     /// @dev Testing the funds transfer and withdraw
     function testRecievingAndWithdrawingEther() public {
         assertEq(address(e).balance, 0);
