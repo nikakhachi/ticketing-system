@@ -24,17 +24,18 @@ contract Event is
 {
     using SafeERC20 for ERC20;
 
-    address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    uint16 public immutable TRANSFER_FEE_PERCENTAGE; /// @dev 1 = 0.01% transfer fee
-
-    FeedRegistryInterface public constant CHAINLINK_FEED_REGISTRY =
-        FeedRegistryInterface(0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf);
-    address public constant CHAINLINK_ETH_DENOMINATION_ =
-        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-
     /// @dev Custom Errors
     error InvalidPrice();
     error MaxSupplyReached();
+
+    address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; /// @dev Used for transfer fees
+    uint16 public immutable TRANSFER_FEE_PERCENTAGE; /// @dev 1 = 0.01% transfer fee
+
+    FeedRegistryInterface public constant CHAINLINK_FEED_REGISTRY =
+        FeedRegistryInterface(0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf); /// @dev Used for getting the price of the token when paying with token
+
+    address public constant CHAINLINK_ETH_DENOMINATION_ =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE; /// @dev Used for price feed for ETH denomination
 
     /// @dev Ticket struct with data used for creating the event
     struct Ticket {
