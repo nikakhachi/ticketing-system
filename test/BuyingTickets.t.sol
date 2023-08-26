@@ -148,6 +148,24 @@ contract BuyingTicketsTest is EventTest {
         }(address(this), ids, amounts);
     }
 
+    /// @dev Testing the batch buying of more tickets that the max supply
+    function testBuyMoreTicketsThanMaxSupplyInBatch2() public {
+        uint amount1 = 50;
+
+        ids.push(ticket1Id);
+        ids.push(ticket1Id);
+
+        amounts.push(amount1);
+        amounts.push(amount1);
+
+        vm.expectRevert(Event.DuplicateIds.selector);
+        e.buyTicketsBatch{value: amount1 * ticket1Price * 2}(
+            address(this),
+            ids,
+            amounts
+        );
+    }
+
     /// @dev Testing the batch buying of tickets with invalid price
     function testBuyTicketsWithInvalidPriceInBatch() public {
         uint amount1 = 50;

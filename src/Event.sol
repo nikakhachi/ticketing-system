@@ -27,6 +27,7 @@ contract Event is
     /// @dev Custom Errors
     error InvalidPrice();
     error MaxSupplyReached();
+    error DuplicateIds();
 
     address public immutable WETH; /// @dev Used for transfer fees
     uint16 public immutable TRANSFER_FEE_PERCENTAGE; /// @dev 1 = 0.01% transfer fee
@@ -160,13 +161,18 @@ contract Event is
     /// @param to address where the tickets will be sent
     /// @param ids ids of the tickets
     /// @param quantities amounts of tickets to buy
-    // TODO: VULNERABILITY: user can include same ids multiple times in the array and get more tickets than the maximum supply
     function buyTicketsBatch(
         address to,
         uint256[] calldata ids,
         uint256[] calldata quantities
     ) public payable whenNotPaused {
+        /// @dev If user provides duplicate ids in ids array, they will be able to mint tifckets more than
+        /// @dev max supply. This statement makes sure that there are no duplicates. It's not very gas efficient,
+        /// @dev but compared to other options (minting in the loop, calling ticketPriceInToken multiple times) it's cheaper
+        if (!_areAllNumbersUnique(ids)) revert DuplicateIds();
+
         uint256 overallPrice;
+
         for (uint256 i; i < ids.length; ++i) {
             uint256 ticketQuantity = quantities[i];
             uint256 ticketId = ids[i];
@@ -181,6 +187,7 @@ contract Event is
             }
         }
         if (msg.value != overallPrice) revert InvalidPrice();
+
         _mintBatch(to, ids, quantities, "");
     }
 
@@ -222,6 +229,22 @@ contract Event is
             ""
         );
         require(success);
+    }
+
+    function _areAllNumbersUnique(
+        uint256[] memory numbers
+    ) internal pure returns (bool) {
+        uint256 length = numbers.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            for (uint256 j = i + 1; j < length; j++) {
+                if (numbers[i] == numbers[j]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     receive() external payable {}
