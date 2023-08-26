@@ -23,6 +23,10 @@ contract EventTest is Test, ERC1155Holder {
 
     address public constant LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA;
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant CHAINLINK_FEED_REGISTRY =
+        0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf;
+
+    uint16 public constant TRANSFER_FEE_PERCENTAGE = 100;
 
     Event public e;
     EventFactory public eFactory;
@@ -52,7 +56,18 @@ contract EventTest is Test, ERC1155Holder {
         tickets.push(Event.Ticket(ticket3Id, ticket3Price, ticket3MaxSupply));
 
         eFactory = new EventFactory();
-        e = Event(payable(eFactory.createEvent("", tickets, 100)));
+
+        e = Event(
+            payable(
+                eFactory.createEvent(
+                    "",
+                    TRANSFER_FEE_PERCENTAGE,
+                    WETH,
+                    CHAINLINK_FEED_REGISTRY,
+                    tickets
+                )
+            )
+        );
         e.acceptOwnership();
     }
 

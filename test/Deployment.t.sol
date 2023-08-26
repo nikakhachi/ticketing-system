@@ -20,13 +20,27 @@ contract DeploymentTest is EventTest {
             assertEq(e.ticketsWithMaxSupply(id), maxSupply);
             assertEq(e.ticketIds(i), id);
         }
+
+        assertEq(e.TRANSFER_FEE_PERCENTAGE(), TRANSFER_FEE_PERCENTAGE);
+        assertEq(e.WETH(), WETH);
+        assertEq(address(e.CHAINLINK_FEED_REGISTRY()), CHAINLINK_FEED_REGISTRY);
     }
 
     /// @dev Testing the initial variables second time directly from created event from Factory
     function testCreateEventFromFactory() public {
         vm.expectEmit(false, true, true, false);
         emit EventCreated(address(0), address(this), block.timestamp);
-        Event _e = Event(payable(eFactory.createEvent("", tickets, 100)));
+        Event _e = Event(
+            payable(
+                eFactory.createEvent(
+                    "",
+                    TRANSFER_FEE_PERCENTAGE,
+                    WETH,
+                    CHAINLINK_FEED_REGISTRY,
+                    tickets
+                )
+            )
+        );
         _e.acceptOwnership();
 
         for (uint i = 0; i < tickets.length; i++) {
@@ -39,6 +53,8 @@ contract DeploymentTest is EventTest {
             assertEq(_e.ticketIds(i), id);
         }
 
-        assertEq(e.TRANSFER_FEE_PERCENTAGE(), 100);
+        assertEq(e.TRANSFER_FEE_PERCENTAGE(), TRANSFER_FEE_PERCENTAGE);
+        assertEq(e.WETH(), WETH);
+        assertEq(address(e.CHAINLINK_FEED_REGISTRY()), CHAINLINK_FEED_REGISTRY);
     }
 }

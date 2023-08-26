@@ -28,11 +28,10 @@ contract Event is
     error InvalidPrice();
     error MaxSupplyReached();
 
-    address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; /// @dev Used for transfer fees
+    address public immutable WETH; /// @dev Used for transfer fees
     uint16 public immutable TRANSFER_FEE_PERCENTAGE; /// @dev 1 = 0.01% transfer fee
 
-    FeedRegistryInterface public constant CHAINLINK_FEED_REGISTRY =
-        FeedRegistryInterface(0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf); /// @dev Used for getting the price of the token when paying with token
+    FeedRegistryInterface public immutable CHAINLINK_FEED_REGISTRY; /// @dev Used for getting the price of the token when paying with token
 
     address public constant CHAINLINK_ETH_DENOMINATION_ =
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE; /// @dev Used for price feed for ETH denomination
@@ -57,8 +56,10 @@ contract Event is
     /// @param _transferFee transfer fee percentage
     constructor(
         string memory _uri,
-        Ticket[] memory _tickets,
-        uint16 _transferFee
+        uint16 _transferFee,
+        address _wethAddress,
+        address _chainlinkFeedRegistryAddress,
+        Ticket[] memory _tickets
     ) ERC1155(_uri) {
         uint length = _tickets.length;
 
@@ -77,6 +78,10 @@ contract Event is
         }
 
         TRANSFER_FEE_PERCENTAGE = _transferFee;
+        WETH = _wethAddress;
+        CHAINLINK_FEED_REGISTRY = FeedRegistryInterface(
+            _chainlinkFeedRegistryAddress
+        );
     }
 
     /// @notice Function for buying tickets
