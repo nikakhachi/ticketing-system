@@ -2,17 +2,40 @@
 pragma solidity ^0.8.19;
 
 import "openzeppelin/token/ERC1155/ERC1155.sol";
-import "openzeppelin/access/Ownable.sol";
+import "openzeppelin/access/Ownable2Step.sol";
 import "openzeppelin/security/Pausable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "openzeppelin/token/ERC1155/extensions/ERC1155Supply.sol";
+import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import {SafeERC20} from "openzeppelin/token/ERC20/utils/SafeERC20.sol";
+import "chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
+import "./UC.sol";
+// console
+import "forge-std/console.sol";
 
 /// @title Event Contract
 /// @author Nika Khachiashvili
-contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
+contract Event is
+    ERC1155,
+    Ownable2Step,
+    Pausable,
+    ERC1155Burnable,
+    ERC1155Supply
+{
+    using SafeERC20 for ERC20;
+
     /// @dev Custom Errors
     error InvalidPrice();
     error MaxSupplyReached();
+    error DuplicateIds();
+
+    address public immutable WETH; /// @dev Used for transfer fees
+    uint16 public immutable TRANSFER_FEE_PERCENTAGE; /// @dev 1 = 0.01% transfer fee
+
+    FeedRegistryInterface public immutable CHAINLINK_FEED_REGISTRY; /// @dev Used for getting the price of the token when paying with token
+
+    address public constant CHAINLINK_ETH_DENOMINATION_ =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE; /// @dev Used for price feed for ETH denomination
 
     /// @dev Ticket struct with data used for creating the event
     struct Ticket {
@@ -29,12 +52,20 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
 
     /// @dev Contract constructor
     /// @dev Is called only once on the deployment
+    /// @param _uri uri of the event
     /// @param _tickets data about the tickets, including id, price and the amount
-    constructor(Ticket[] memory _tickets) ERC1155("") {
+    /// @param _transferFee transfer fee percentage
+    constructor(
+        string memory _uri,
+        uint16 _transferFee,
+        address _wethAddress,
+        address _chainlinkFeedRegistryAddress,
+        Ticket[] memory _tickets
+    ) ERC1155(_uri) {
         uint length = _tickets.length;
 
-        for (uint256 i; i < length; ++i) {
-            Ticket memory ticket = _tickets[i];
+        for (UC i = ZERO; i < uc(length); i = i + ONE) {
+            Ticket memory ticket = _tickets[i.unwrap()];
 
             /// @dev Instead of 2 mappings, I've also tested using mapping => struct, but
             /// @dev it was more expensive for users, so here's the current, cheaper implementation
@@ -46,51 +77,118 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
             /// @dev But current implementation is cheaper
             ticketIds.push(ticket.id);
         }
+
+        TRANSFER_FEE_PERCENTAGE = _transferFee;
+        WETH = _wethAddress;
+        CHAINLINK_FEED_REGISTRY = FeedRegistryInterface(
+            _chainlinkFeedRegistryAddress
+        );
     }
 
     /// @notice Function for buying tickets
     /// @param to address where the tickets will be sent
     /// @param ticketId id of the ticket
-    /// @param amount amount of tickets to buy
+    /// @param quantity quantity of tickets to buy
     function buyTickets(
         address to,
         uint256 ticketId,
-        uint256 amount
+        uint256 quantity
     ) public payable whenNotPaused {
-        if (msg.value != ticketsWithPrice[ticketId] * amount)
+        if (msg.value != ticketsWithPrice[ticketId] * quantity)
             revert InvalidPrice();
         if (
-            ERC1155Supply.totalSupply(ticketId) + amount >
+            ERC1155Supply.totalSupply(ticketId) + quantity >
             ticketsWithMaxSupply[ticketId]
         ) revert MaxSupplyReached();
 
-        _mint(to, ticketId, amount, "");
+        _mint(to, ticketId, quantity, "");
+    }
+
+    /// @notice Function for buying tickets
+    /// @param _to address where the tickets will be sent
+    /// @param _token payment oken
+    /// @param _ticketId id of the ticket
+    /// @param _quantity quantity of tickets to buy
+    function buyTicketsWithToken(
+        address _to,
+        address _token,
+        uint256 _ticketId,
+        uint256 _quantity
+    ) external whenNotPaused {
+        if (
+            ERC1155Supply.totalSupply(_ticketId) + _quantity >
+            ticketsWithMaxSupply[_ticketId]
+        ) revert MaxSupplyReached();
+
+        (, int tokenPriceInEth, , , ) = CHAINLINK_FEED_REGISTRY.latestRoundData(
+            _token,
+            CHAINLINK_ETH_DENOMINATION_
+        );
+
+        ERC20 token = ERC20(_token);
+
+        token.safeTransferFrom(
+            msg.sender,
+            address(this),
+            ((ticketsWithPrice[_ticketId] *
+                _quantity *
+                10 ** ERC20(_token).decimals()) / uint256(tokenPriceInEth))
+        );
+
+        _mint(_to, _ticketId, _quantity, "");
+    }
+
+    /// @notice Function for getting ticket price in provided token
+    /// @param _token payment oken
+    /// @param _ticketId id of the ticket
+    /// @return The price of the ticket in provided token
+    function ticketPriceInToken(
+        address _token,
+        uint256 _ticketId,
+        uint256 _quantity
+    ) external view returns (uint256) {
+        (, int tokenPriceInEth, , , ) = CHAINLINK_FEED_REGISTRY.latestRoundData(
+            _token,
+            CHAINLINK_ETH_DENOMINATION_
+        );
+
+        return ((ticketsWithPrice[_ticketId] *
+            _quantity *
+            10 ** ERC20(_token).decimals()) / uint256(tokenPriceInEth));
     }
 
     /// @notice Function for buying tickets in batch
     /// @param to address where the tickets will be sent
     /// @param ids ids of the tickets
-    /// @param amounts amounts of tickets to buy
+    /// @param quantities amounts of tickets to buy
     function buyTicketsBatch(
         address to,
-        uint256[] memory ids,
-        uint256[] memory amounts
+        uint256[] calldata ids,
+        uint256[] calldata quantities
     ) public payable whenNotPaused {
-        uint256 overallPrice;
-        for (uint256 i; i < ids.length; ++i) {
-            uint256 ticketAmount = amounts[i];
+        /// @dev If user provides duplicate ids in ids array, they will be able to mint tifckets more than
+        /// @dev max supply. This statement makes sure that there are no duplicates. It's not very gas efficient,
+        /// @dev but compared to other options (minting in the loop, calling ticketPriceInToken multiple times) it's cheaper
+        if (!_areAllNumbersUnique(ids)) revert DuplicateIds();
 
-            overallPrice += ticketsWithPrice[ids[i]] * ticketAmount;
+        uint256 overallPrice;
+
+        for (uint256 i; i < ids.length; ++i) {
+            uint256 ticketQuantity = quantities[i];
+            uint256 ticketId = ids[i];
+
+            overallPrice += ticketsWithPrice[ticketId] * ticketQuantity;
 
             if (
-                ERC1155Supply.totalSupply(ids[i]) + ticketAmount >
-                ticketsWithMaxSupply[ids[i]]
+                ERC1155Supply.totalSupply(ticketId) + ticketQuantity >
+                ticketsWithMaxSupply[ticketId]
             ) {
                 revert MaxSupplyReached();
             }
         }
         if (msg.value != overallPrice) revert InvalidPrice();
-        _mintBatch(to, ids, amounts, "");
+
+        _mintBatch(to, ids, quantities, "");
     }
 
     /// @notice Function for getting the remaining tickets
@@ -133,6 +231,22 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         require(success);
     }
 
+    function _areAllNumbersUnique(
+        uint256[] memory numbers
+    ) internal pure returns (bool) {
+        uint256 length = numbers.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            for (uint256 j = i + 1; j < length; j++) {
+                if (numbers[i] == numbers[j]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     receive() external payable {}
 
     /// @dev Override required by Solidity for the OpenZeppelin
@@ -145,5 +259,40 @@ contract Event is ERC1155, Ownable, Pausable, ERC1155Burnable, ERC1155Supply {
         bytes memory data
     ) internal override(ERC1155, ERC1155Supply) {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
+
+    function _safeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes memory data
+    ) internal override(ERC1155) {
+        ERC20(WETH).safeTransferFrom(
+            msg.sender,
+            address(this),
+            (ticketsWithPrice[id] * TRANSFER_FEE_PERCENTAGE * amount) / 10000
+        );
+        super._safeTransferFrom(from, to, id, amount, data);
+    }
+
+    function _safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) internal override(ERC1155) {
+        uint256 overallValue;
+        for (UC i = ZERO; i < uc(ids.length); i = i + ONE) {
+            uint index = i.unwrap();
+            overallValue += ticketsWithPrice[ids[index]] * amounts[index];
+        }
+        ERC20(WETH).safeTransferFrom(
+            msg.sender,
+            address(this),
+            (overallValue * TRANSFER_FEE_PERCENTAGE) / 10000
+        );
+        super._safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 }

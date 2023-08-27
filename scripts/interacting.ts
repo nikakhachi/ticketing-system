@@ -1,4 +1,5 @@
 import { upgrades, ethers } from "hardhat";
+import { CHAINLINK_FEED_REGISTRY, WETH } from "./constants";
 
 const main = async () => {
   const [user1, user2, user3, user4, user5] = await ethers.getSigners();
@@ -9,19 +10,35 @@ const main = async () => {
 
   // User1 wants to make a musical event and for the ticketing system he wants to use the EventFactory contract.
   // He wants 3 types of tickets: Silver, Gold and Platinum. Price and the supply is respective to the type.
-  const tx1 = await eventFactory.createEvent([
+  const tx1 = await eventFactory.createEvent("", 100, WETH, CHAINLINK_FEED_REGISTRY, [
     { id: 1, price: ethers.parseEther("1"), maxSupply: 200 },
     { id: 2, price: ethers.parseEther("2"), maxSupply: 100 },
     { id: 3, price: ethers.parseEther("10"), maxSupply: 10 },
   ]);
   const receipt1 = await tx1.wait();
   const eventAddress = receipt1.logs[receipt1.logs.length - 1].args[0];
+
   const event = await ethers.getContractAt("Event", eventAddress);
+  const weth = await ethers.getContractAt("IWETH", WETH);
+
+  {
+    const tx = await event.acceptOwnership();
+    await tx.wait();
+  }
 
   // User2 wants to buy 2 tickets of Gold type (id 2) for him and his wife (User3).
   // He buys them and then transfers the ownership of one of the tickets to his wife.
   const tx2 = await event.connect(user2).buyTickets(user2.address, 2, 2, { value: ethers.parseEther("4") });
   await tx2.wait();
+  // Before he transfers the tickets, he pays the fees in WETH
+  {
+    const tx = await weth.connect(user2).deposit({ value: ethers.parseEther("100") });
+    await tx.wait();
+  }
+  {
+    const tx = await weth.connect(user2).approve(eventAddress, ethers.parseEther("0.02"));
+    await tx.wait();
+  }
   const tx3 = await event.connect(user2).safeTransferFrom(user2.address, user3.address, 2, 1, ethers.toUtf8Bytes(""));
   await tx3.wait();
 
