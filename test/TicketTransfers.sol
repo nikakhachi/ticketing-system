@@ -21,7 +21,7 @@ contract TicketTransfersTest is EventTest {
 
         uint transferFee = (ticket1Price *
             e.TRANSFER_FEE_PERCENTAGE() *
-            amount) / 100;
+            amount) / 10000;
 
         deal(address(WETH), address(this), transferFee);
 
@@ -52,11 +52,11 @@ contract TicketTransfersTest is EventTest {
 
         uint ticket1TransferFee = (ticket1Price *
             e.TRANSFER_FEE_PERCENTAGE() *
-            amount1) / 100;
+            amount1) / 10000;
 
         uint ticket2TransferFee = (ticket2Price *
             e.TRANSFER_FEE_PERCENTAGE() *
-            amount2) / 100;
+            amount2) / 10000;
 
         uint totalFee = ticket1TransferFee + ticket2TransferFee;
 
@@ -88,7 +88,7 @@ contract TicketTransfersTest is EventTest {
 
         uint transferFee = (ticket1Price *
             e.TRANSFER_FEE_PERCENTAGE() *
-            amount) / 100;
+            amount) / 10000;
 
         deal(address(WETH), address(this), transferFee);
 
@@ -109,7 +109,7 @@ contract TicketTransfersTest is EventTest {
 
         uint transferFee = (ticket1Price *
             e.TRANSFER_FEE_PERCENTAGE() *
-            amount) / 100;
+            amount) / 10000;
 
         deal(address(WETH), address(this), transferFee);
 
@@ -139,11 +139,11 @@ contract TicketTransfersTest is EventTest {
 
         uint ticket1TransferFee = (ticket1Price *
             e.TRANSFER_FEE_PERCENTAGE() *
-            amount1) / 100;
+            amount1) / 10000;
 
         uint ticket2TransferFee = (ticket2Price *
             e.TRANSFER_FEE_PERCENTAGE() *
-            amount2) / 100;
+            amount2) / 10000;
 
         uint totalFee = ticket1TransferFee + ticket2TransferFee;
 

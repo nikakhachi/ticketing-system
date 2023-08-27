@@ -271,7 +271,7 @@ contract Event is
         ERC20(WETH).safeTransferFrom(
             msg.sender,
             address(this),
-            (ticketsWithPrice[id] * TRANSFER_FEE_PERCENTAGE * amount) / 100
+            (ticketsWithPrice[id] * TRANSFER_FEE_PERCENTAGE * amount) / 10000
         );
         super._safeTransferFrom(from, to, id, amount, data);
     }
@@ -291,7 +291,7 @@ contract Event is
         ERC20(WETH).safeTransferFrom(
             msg.sender,
             address(this),
-            (overallValue * TRANSFER_FEE_PERCENTAGE) / 100
+            (overallValue * TRANSFER_FEE_PERCENTAGE) / 10000
         );
         super._safeBatchTransferFrom(from, to, ids, amounts, data);
     }
