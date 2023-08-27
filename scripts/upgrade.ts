@@ -1,4 +1,5 @@
 import { upgrades, ethers } from "hardhat";
+import { CHAINLINK_FEED_REGISTRY, WETH } from "./constants";
 
 const PROXY = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
 
@@ -10,7 +11,7 @@ const main = async () => {
 
   console.log(`Event Factory Version -- ${await eventFactoryV2.version()} --  Implementation has been Deployed`);
 
-  const tx = await eventFactoryV2.createEvent("", [
+  const tx = await eventFactoryV2.createEvent("", 100, WETH, CHAINLINK_FEED_REGISTRY, [
     { id: 1, price: ethers.parseEther("1"), maxSupply: 200 },
     { id: 2, price: ethers.parseEther("2"), maxSupply: 100 },
     { id: 3, price: ethers.parseEther("10"), maxSupply: 500 },
