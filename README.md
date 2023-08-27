@@ -42,12 +42,14 @@ Tests are written to cover as many scenarios as possible, but still, it's not en
 
 To run the tests, you will have to do the following
 
+IMPORTANT: Make sure you run tests on a Mainnet fork because some test cases include Mainnet token addresses!
+
 1. Clone this repository to your local machine.
 2. Run `forge install`.
 3. Run `forge build`.
-4. Run `forge test`.
+4. Run `forge test --fork-url {MAINNET_RPC_URL]`.
 
-OR, you can just run `forge test`, which will automatically install dependencies and compile the contracts.
+OR, you can just run `forge test --fork-url {MAINNET_RPC_URL]`, which will automatically install dependencies and compile the contracts.
 
 ## Deploying
 
